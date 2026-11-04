@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Offline App Update Demo</title>
+    <style>
+        body { font-family: sans-serif; margin: 20px; line-height: 1.6; }
+        .status { padding: 10px; margin-top: 10px; border-radius: 5px; }
+        .online { background-color: #e6ffe6; border: 1px solid #00cc00; color: #006600; }
+        .offline { background-color: #ffe6e6; border: 1px solid #cc0000; color: #660000; }
+        .info { background-color: #e6f7ff; border: 1px solid #0099e6; color: #004d80; }
+        .update-available { background-color: #fffacd; border: 1px solid #daa520; color: #8b4513; }
+        button { padding: 10px 15px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; margin-top: 15px; }
+        button:hover { background-color: #0056b3; }
+        button:disabled { background-color: #cccccc; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+    <h1>Offline App Update Demo</h1>
+    <p>This example simulates an application that checks for updates when it starts and when it regains network connectivity.</p>
+
+    <div class="info">
+        <p><strong>Current App Version:</strong> <span id="currentVersion">1.0.0</span></p>
+        <p><strong>Network Status:</strong> <span id="networkStatus">Checking...</span></p>
+        <p><strong>Update Status:</strong> <span id="updateStatus"></span></p>
+    </div>
+
+    <button id="applyUpdateButton" disabled>Apply Update (Simulated)</button>
+
+    <script>
+        let currentAppVersion = "1.0.0"; // The version of our simulated app
+        const latestServerVersion = "1.1.0"; // Simulate a newer version available on the server
+
+        const currentVersionSpan = document.getElementById('currentVersion');
+        const networkStatusSpan = document.getElementById('networkStatus');
+        const updateStatusSpan = document.getElementById('updateStatus');
+        const applyUpdateButton = document.getElementById('applyUpdateButton');
+
+        function updateNetworkStatusUI() {
+            if (navigator.onLine) {
+                networkStatusSpan.textContent = "Online";
+                networkStatusSpan.className = 'status online';
+            } else {
+                networkStatusSpan.textContent = "Offline";
+                networkStatusSpan.className = 'status offline';
+            }
+        }
+
+        function checkUpdates() {
+            updateNetworkStatusUI(); // Always update network status first
+
+            if (navigator.onLine) {
+                updateStatusSpan.textContent = "Checking for updates...";
+                updateStatusSpan.className = 'status info';
+
+                // Simulate fetching latest version from a server
+                // In a real app, this would be an API call
+                setTimeout(() => { // Simulate network delay
+                    if (latestServerVersion > currentAppVersion) {
+                        updateStatusSpan.textContent = `Update available! Version ${latestServerVersion} is ready.`;
+                        updateStatusSpan.className = 'status update-available';
+                        applyUpdateButton.disabled = false;
+                    } else {
+                        updateStatusSpan.textContent = "You are running the latest version.";
+                        updateStatusSpan.className = 'status info';
+                        applyUpdateButton.disabled = true;
+                    }
+                }, 1500); // 1.5 second delay
+            } else {
+                updateStatusSpan.textContent = "Cannot check for updates while offline.";
+                updateStatusSpan.className = 'status offline';
+                applyUpdateButton.disabled = true;
+            }
+        }
+
+        // --- Core concept demonstration ---
+        // 1. Initial check on app load
+        document.addEventListener('DOMContentLoaded', checkUpdates);
+
+        // 2. Check when network status changes to online
+        window.addEventListener('online', () => {
+            console.log("Device reconnected. Checking for updates...");
+            // This is the key part: when the app comes back online, it should check for updates.
+            checkUpdates(); // <-- This is where the article's problem is addressed
+        });
+
+        // 3. Update UI when network status changes to offline
+        window.addEventListener('offline', () => {
+            console.log("Device went offline.");
+            updateNetworkStatusUI();
+            updateStatusSpan.textContent = "Device is offline. Updates cannot be checked.";
+            updateStatusSpan.className = 'status offline';
+            applyUpdateButton.disabled = true;
+        });
+        // --- End core concept demonstration ---
+
+        applyUpdateButton.addEventListener('click', () => {
+            alert(`Simulating update from ${currentAppVersion} to ${latestServerVersion}. App will now 'restart'.`);
+            currentAppVersion = latestServerVersion; // Update the local version
+            currentVersionSpan.textContent = currentAppVersion;
+            applyUpdateButton.disabled = true;
+            updateStatusSpan.textContent = "App updated to the latest version!";
+            updateStatusSpan.className = 'status online'; // Or info
+            // In a real app, this might involve a page reload or a more complex update process
+        });
+
+        // Initial UI setup
+        currentVersionSpan.textContent = currentAppVersion;
+        updateNetworkStatusUI(); // Set initial network status
+    </script>
+</body>
+</html>
